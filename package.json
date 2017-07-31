@@ -1,0 +1,126 @@
+{
+  "name": "muster",
+  "productName": "Muster",
+  "version": "1.0.0",
+  "description": "React Native Debugging Tools",
+  "main": "index.js",
+  "scripts": {
+    "start": "$(npm bin)/electron . --dev",
+    "build": "NODE_ENV=production $(npm bin)/webpack --colors",
+    "pack": "$(npm bin)/electron-builder --dir"
+  },
+  "author": "Gilad Novik <gilad@novik.ca>",
+  "license": "ISC",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/giladno/muster.git"
+  },
+  "devDependencies": {
+    "babel-core": "^6.25.0",
+    "babel-eslint": "^7.2.3",
+    "babel-loader": "^7.1.1",
+    "babel-plugin-dynamic-import-webpack": "^1.0.1",
+    "babel-polyfill": "^6.23.0",
+    "babel-preset-es2015": "^6.24.1",
+    "babel-preset-react": "^6.24.1",
+    "babel-preset-stage-2": "^6.24.1",
+    "bluebird": "^3.5.0",
+    "css-loader": "^0.28.4",
+    "electron": "^1.6.11",
+    "electron-builder": "^19.17.0",
+    "eslint": "^4.3.0",
+    "eslint-plugin-react": "^7.1.0",
+    "file-loader": "^0.11.2",
+    "react": "^15.6.1",
+    "react-dom": "^15.6.1",
+    "shortid": "^2.2.8",
+    "style-loader": "^0.18.2",
+    "url-loader": "^0.5.9",
+    "webpack": "^3.4.1",
+    "webpack-dev-server": "^2.6.1",
+    "webpack-merge": "^4.1.0"
+  },
+  "dependencies": {},
+  "babel": {
+    "presets": [
+      "es2015",
+      "react",
+      "stage-2"
+    ],
+    "plugins": [
+      "transform-class-properties",
+      "dynamic-import-webpack"
+    ]
+  },
+  "build": {
+    "appId": "ca.novik.muster",
+    "files": [
+      "!docs",
+      "!src",
+      "!webpack.config.js"
+    ],
+    "mac": {
+      "identity": null
+    }
+  },
+  "eslintConfig": {
+    "rules": {
+      "no-console": 0,
+      "strict": 0,
+      "comma-dangle": [
+        2,
+        "always-multiline"
+      ],
+      "quotes": [
+        2,
+        "single"
+      ],
+      "linebreak-style": [
+        2,
+        "unix"
+      ],
+      "semi": [
+        2,
+        "always"
+      ],
+      "no-unused-vars": [
+        1,
+        {
+          "args": "after-used",
+          "argsIgnorePattern": "^_"
+        }
+      ],
+      "max-len": [
+        2,
+        120,
+        2,
+        {
+          "ignoreUrls": true,
+          "ignorePattern": "/(.*)/;"
+        }
+      ],
+      "react/prop-types": 0,
+      "react/display-name": 0,
+      "react/jsx-no-bind": 2
+    },
+    "env": {
+      "amd": true,
+      "es6": true,
+      "browser": true,
+      "node": true
+    },
+    "extends": [
+      "eslint:recommended",
+      "plugin:react/recommended"
+    ],
+    "parserOptions": {
+      "ecmaFeatures": {
+        "jsx": true
+      }
+    },
+    "plugins": [
+      "react"
+    ],
+    "parser": "babel-eslint"
+  }
+}
