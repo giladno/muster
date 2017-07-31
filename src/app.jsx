@@ -73,10 +73,11 @@ class App extends PureComponent {
     open = ()=>{
         if (this.state.streams)
             return;
-        let dir = (electron.remote.dialog.showOpenDialog({properties: ['openDirectory']})||[])[0];
-        if (!dir)
-            return;
-        this.setState({dir}, ()=>document.title = localStorage.dir = dir);
+        let {dialog, getCurrentWindow} = electron.remote;
+        dialog.showOpenDialog(getCurrentWindow(), {properties: ['openDirectory']}, ([dir] = [])=>{
+            if (dir)
+                this.setState({dir}, ()=>document.title = localStorage.dir = dir);
+        });
     };
 
     start = async ()=>{
