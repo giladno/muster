@@ -1,6 +1,7 @@
 'use strict';
 const path = require('path');
 const webpack = require('webpack');
+const config = require('./package.json');
 
 module.exports = require('webpack-merge')({
     target: 'electron-renderer',
@@ -8,7 +9,6 @@ module.exports = require('webpack-merge')({
     output: {
         path: path.join(__dirname, 'client'),
         filename: 'bundle.js',
-        publicPath: '/client/',
     },
     module: {
         loaders: [{
@@ -20,13 +20,29 @@ module.exports = require('webpack-merge')({
             test: /\.css$/,
             use: ['style-loader', 'css-loader'],
         }, {
+            test: /\.less$/,
+            use: ['style-loader', 'css-loader', {loader: 'less-loader', query: {modifyVars: config.theme||{}}}],
+        }, {
             test: /\.(jpe?g|png|woff|woff2|eot|ttf|svg)$/,
             loader: 'url-loader?limit=100000',
         }],
     },
+    plugins: [
+        new (require('html-webpack-plugin'))({
+            inject: false,
+            template: require('html-webpack-template'),
+            title: config.productName,
+            appMountId: 'root',
+            minify: {collapseWhitespace: true},
+            mobile: false,
+        }),
+    ],
 }, {
     development: {
         devtool: 'cheap-module-eval-source-map',
+        output: {
+            publicPath: '/client/',
+        },
         entry: [
             'webpack-dev-server/client?http://localhost:3000',
             './src/app.jsx',

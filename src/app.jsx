@@ -1,18 +1,23 @@
 'use strict';
-require('file-loader?name=[name].[ext]!./index.html');
-require('./css/photon.css');
-require('./css/font-awesome.min.css');
+require('./css/style.less');
+import _ from 'lodash';
 import Promise from 'bluebird';
 import EventEmitter from 'events';
 import os from 'os';
 import path from 'path';
-import {spawn, execFile} from 'child_process';
+import util from 'util';
+import child_process, {spawn} from 'child_process';
 import readline from 'readline';
 import {PassThrough} from 'stream';
 import React, {PureComponent} from 'react';
+import {LocaleProvider, Layout, Menu, Button, Steps} from 'antd';
+import {Icon} from 'react-fa';
 import electron from 'electron';
 import ReactDOM from 'react-dom';
 import shortid from 'shortid';
+import enUS from 'antd/lib/locale-provider/en_US';
+
+const execFile = Promise.promisify(child_process.execFile);
 
 const RN_CLI = 'node_modules/react-native/local-cli/cli.js';
 
@@ -55,28 +60,33 @@ class App extends PureComponent {
         super(props);
         this.state = {
             dir: localStorage.dir,
-            tab: 0,
-            tabs: ['Console', 'Build', 'Packager'].map((title, i)=>({title, history: [],
-                onClick: this.onTab.bind(this, i)})),
+            tab: '2',
+            tabs: ['Console', 'Build', 'Packager'].map((title, key)=>({title, history: [], key})),
         };
     }
 
     componentDidMount(){
         let {dir} = this.state;
         document.title = dir||document.title;
-        if (!dir)
+        if (dir)
+            this.checklist(dir);
+        else
             this.open();
     }
 
-    onTab = tab=>this.setState({tab});
+    onTab = ({key})=>this.setState({tab: key});
 
     open = ()=>{
         if (this.state.streams)
             return;
         let {dialog, getCurrentWindow} = electron.remote;
         dialog.showOpenDialog(getCurrentWindow(), {properties: ['openDirectory']}, ([dir] = [])=>{
-            if (dir)
-                this.setState({dir}, ()=>document.title = localStorage.dir = dir);
+            if (!dir)
+                return;
+            this.setState({dir}, ()=>{
+                document.title = localStorage.dir = dir;
+                this.checklist(dir);
+            });
         });
     };
 
@@ -120,8 +130,8 @@ class App extends PureComponent {
             if (!udid)
             {
                 udid = []
-                    .concat(...Object.values(JSON.parse(await Promise.promisify(execFile)('xcrun',
-                                    ['simctl', 'list', '--json', 'devices'], {encoding: 'utf8'})).devices))
+                    .concat(...Object.values(JSON.parse(await execFile('xcrun', ['simctl', 'list', '--json',
+                        'devices'], {encoding: 'utf8'})).devices))
                     .reduce((res, {state, udid})=>res || state=='Booted' && udid, null);
             }
             return new Promise((resolve, reject)=>{
@@ -141,6 +151,7 @@ class App extends PureComponent {
         let packager = await startPackager();
         if (!packager)
             return;
+        return;
         let udid = await startBuild();
         if (!udid)
             return packager.stop();
@@ -159,58 +170,116 @@ class App extends PureComponent {
         this.setState({streams: null});
     };
 
+    checklist = async dir=>{
+        let env = process.env;
+        try {
+            env = JSON.parse((await execFile('node', ['-e', 'console.log(JSON.stringify(process.env))'],
+                        {encoding: 'utf8'})).trim());
+        } catch(err) {}
+        const shell = async opt=>{
+            let {cmd, args = [], post_process, format, join = ''} = opt;
+            try {
+                let output = opt.env ? env[opt.env] :
+                    await execFile(cmd, [].concat(args), {encoding: 'utf8', cwd: dir});
+                output = output.trim();
+                if (!post_process)
+                    return output;
+                if (typeof post_process=='function')
+                    return post_process(output);
+                let groups = [];
+                for (let rx of [].concat(post_process))
+                {
+                    let m = output.match(rx);
+                    if (!m)
+                        return '';
+                    if (m.length==1)
+                        groups.push(m[0]);
+                    else
+                        groups.push(...m.slice(1));
+                }
+                if (format)
+                    return util.format(format, ...groups);
+                return groups.join(join);
+            }
+            catch(err) { return null; }
+        };
+        this.setState({checklist: await Promise.all([
+            {title: 'Node.js', cmd: 'node', args: '-v', post_process: /[\d.]+/},
+            {title: 'Watchman', cmd: 'watchman', args: '-v'},
+            {title: 'Xcode', cmd: 'xcodebuild', args: '-version',
+                post_process: [/xcode ([\d.]+)/i, /version ([\w]+)/i], format: '%s (%s)'},
+            {title: 'Command Line Tools', description: {finish: 'Installed', error: 'Not Installed'},
+                cmd: 'xcode-select', args: '-p'},
+            {title: 'ANDROID_HOME', env: 'ANDROID_HOME'},
+            {title: 'ADB', cmd: 'adb', args: 'version', post_process: /version ([\d.]+)/},
+        ].map(async opt=>{
+            let data = {...opt, output: await shell(opt)};
+            data.status = data.status ? _.template(data.status)(data) : data.output ? 'finish' : 'error';
+            for (let key of ['title', 'description'])
+            {
+                let text = data[key];
+                if (typeof text=='object')
+                    text = text[data.status];
+                if (!text)
+                {
+                    if (key=='description')
+                        data.description = data.output || 'Unknown';
+                    continue;
+                }
+                data[key] = _.template(text)(data);
+            }
+            return data;
+        }))});
+    };
+
     render(){
-        let {dir, tab, tabs, streams} = this.state;
+        let {dir, tab, tabs, streams, checklist} = this.state;
         return (
-            <div className='window'>
-                <header className='toolbar toolbar-header'>
-                    <div className='toolbar-actions'>
-                        <button
-                            className='btn btn-default'
-                            title='Open'
-                            disabled={streams ? 'disabled' : false}
-                            onClick={this.open}
-                        >
-                            <span className='icon icon-folder'></span>
-                        </button>
-                        <div className='btn-group'>
-                            <button
-                                className='btn btn-default'
-                                title='Debug'
-                                disabled={dir && !streams ? false : 'disabled'}
-                                onClick={this.start}
-                            >
-                                <span className='icon'><i className='fa fa-play' /></span>
-                            </button>
-                            <button
-                                className='btn btn-default'
-                                title='Stop Debug'
-                                disabled={streams ? false : 'disabled'}
-                                onClick={this.stop}
-                            >
-                                <span className='icon'><i className='fa fa-stop' /></span>
-                            </button>
+            <LocaleProvider locale={enUS}>
+                <Layout>
+                    <Layout.Sider id='menu' width={200}>
+                        <div id='toolbar'>
+                            <Button
+                                size='small'
+                                disabled={streams ? 'disabled' : false}
+                                onClick={this.open}
+                                title='Load Project'
+                            ><Icon name='folder-o' /></Button>
+                            <Button.Group style={{float: 'right'}}>
+                                <Button
+                                    size='small'
+                                    disabled={dir && !streams ? false : 'disabled'}
+                                    onClick={this.start}
+                                    title='Debug'
+                                ><Icon name='play' /></Button>
+                                <Button
+                                    size='small'
+                                    disabled={streams ? false : 'disabled'}
+                                    onClick={this.stop}
+                                    title='Stop'
+                                ><Icon name='stop' /></Button>
+                            </Button.Group>
                         </div>
-                    </div>
-                </header>
-                <div className='window-content'>
-                    <div className='pane-group'>
-                        <div className='pane'>
-                            <div className='tab-group'>
-                                {tabs.map((t, i)=>
-                                    <div
-                                        key={i}
-                                        className={'tab-item'+(tab==i ? ' active' : '')}
-                                        onClick={t.onClick}
-                                    >{t.title}</div>)}
-                                </div>
-                                <div className='console'>
-                                    {tabs[tab].history.map(({id, data})=>(<div key={id}>{data}</div>))}
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+                        <Menu onSelect={this.onTab} selectedKeys={[tab]} mode='inline' style={{border: 0}}>
+                            <Menu.Divider />
+                            {tabs.map(({title, key})=><Menu.Item key={key}>{title}</Menu.Item>)}
+                        </Menu>
+                    </Layout.Sider>
+                    <Layout.Content style={{marginLeft: 200}} id='console'>
+                        {tabs[+tab].history.map(({id, data})=>(<div key={id}>{data}</div>))}
+                    </Layout.Content>
+                    {checklist && <Layout.Sider id='checklist' style={{background: '#fff', paddingTop: 16}}>
+                        <Steps direction='vertical' size='small' style={{paddingLeft: 10}}>
+                            {checklist.map(({cmd, env, title, description, status})=><Steps.Step
+                                key={env||cmd}
+                                status={status}
+                                title={title}
+                                description={description}
+                            />)}
+                        </Steps>
+                    </Layout.Sider>}
+                </Layout>
+            </LocaleProvider>
         );
     }
 }

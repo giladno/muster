@@ -18,7 +18,6 @@ app.on('ready', async ()=>{
                 return reject(err);
             resolve();
         }));
-
         ipcMain.on('spawn', (event, pid)=>{
             if (pid>0)
                 pids.add(pid);
