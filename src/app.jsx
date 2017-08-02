@@ -10,7 +10,7 @@ import child_process, {spawn} from 'child_process';
 import readline from 'readline';
 import {PassThrough} from 'stream';
 import React, {PureComponent} from 'react';
-import {LocaleProvider, Layout, Menu, Button, Steps} from 'antd';
+import {LocaleProvider, Layout, Menu, Button, Steps, Collapse} from 'antd';
 import {Icon} from 'react-fa';
 import electron from 'electron';
 import ReactDOM from 'react-dom';
@@ -54,6 +54,19 @@ class ConsoleStream extends EventEmitter {
             this.child.kill(signal);
     }
 }
+
+const Url = class extends PureComponent {
+    onClick = ()=>electron.shell.openExternal(this.props.url);
+
+    render(){
+        return <span>{this.props.title}<Icon
+                name='info-circle'
+                title={this.props.url}
+                style={{cursor: 'pointer', paddingLeft: 5, color: 'lightgrey'}}
+                onClick={this.onClick}
+            /></span>;
+    }
+};
 
 class App extends PureComponent {
     constructor(props){
@@ -204,14 +217,21 @@ class App extends PureComponent {
             catch(err) { return null; }
         };
         this.setState({checklist: await Promise.all([
-            {title: 'Node.js', cmd: 'node', args: '-v', post_process: /[\d.]+/},
-            {title: 'Watchman', cmd: 'watchman', args: '-v'},
+            {title: 'Node.js', cmd: 'node', args: '-v', post_process: /[\d.]+/,
+                url: 'https://facebook.github.io/react-native/docs/getting-started.html#installing-dependencies'},
+            {title: 'Watchman', cmd: 'watchman', args: '-v',
+                url: 'https://facebook.github.io/react-native/docs/getting-started.html#installing-dependencies'},
             {title: 'Xcode', cmd: 'xcodebuild', args: '-version',
-                post_process: [/xcode ([\d.]+)/i, /version ([\w]+)/i], format: '%s (%s)'},
+                post_process: [/xcode ([\d.]+)/i, /version ([\w]+)/i], format: '%s (%s)',
+                url: 'https://facebook.github.io/react-native/docs/getting-started.html#xcode'},
             {title: 'Command Line Tools', description: {finish: 'Installed', error: 'Not Installed'},
-                cmd: 'xcode-select', args: '-p'},
-            {title: 'ANDROID_HOME', env: 'ANDROID_HOME'},
-            {title: 'ADB', cmd: 'adb', args: 'version', post_process: /version ([\d.]+)/},
+                cmd: 'xcode-select', args: '-p',
+                url: 'https://facebook.github.io/react-native/docs/getting-started.html#command-line-tools'},
+            {title: 'ANDROID_HOME', env: 'ANDROID_HOME', url: 'https://facebook.github.io/react-native/docs/'+
+                'getting-started.html#3-configure-the-android-home-environment-variable'},
+            {title: 'ADB', cmd: 'adb', args: 'version', post_process: /version ([\d.]+)/,
+                url: 'https://facebook.github.io/react-native/docs/getting-started.html#'+
+                'android-development-environment'},
         ].map(async opt=>{
             let data = {...opt, output: await shell(opt)};
             data.status = data.status ? _.template(data.status)(data) : data.output ? 'finish' : 'error';
@@ -228,6 +248,8 @@ class App extends PureComponent {
                 }
                 data[key] = _.template(text)(data);
             }
+            if (data.url)
+                data.title = (<Url {...data} />);
             return data;
         }))});
     };
@@ -268,15 +290,18 @@ class App extends PureComponent {
                     <Layout.Content style={{marginLeft: 200}} id='console'>
                         {tabs[+tab].history.map(({id, data})=>(<div key={id}>{data}</div>))}
                     </Layout.Content>
-                    {checklist && <Layout.Sider id='checklist' style={{background: '#fff', paddingTop: 16}}>
-                        <Steps direction='vertical' size='small' style={{paddingLeft: 10}}>
-                            {checklist.map(({cmd, env, title, description, status})=><Steps.Step
-                                key={env||cmd}
-                                status={status}
-                                title={title}
-                                description={description}
-                            />)}
-                        </Steps>
+                    {checklist && <Layout.Sider id='checklist'>
+                        <Collapse bordered={false} defaultActiveKey='checklist'>
+                            <Collapse.Panel header='Checklist' key='checklist'>
+                                <Steps direction='vertical' size='small'>
+                                    {checklist.map(({cmd, env, title, description, status})=><Steps.Step
+                                        key={env||cmd}
+                                        status={status}
+                                        title={title}
+                                        description={description}
+                                    />)}
+                                </Steps>
+                        </Collapse.Panel></Collapse>
                     </Layout.Sider>}
                 </Layout>
             </LocaleProvider>
