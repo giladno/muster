@@ -164,7 +164,6 @@ class App extends PureComponent {
         let packager = await startPackager();
         if (!packager)
             return;
-        return;
         let udid = await startBuild();
         if (!udid)
             return packager.stop();

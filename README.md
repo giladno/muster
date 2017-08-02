@@ -5,7 +5,8 @@ This is a desktop tool for React Native developers.
 
 NOTE: This tool is in a very early stage!!
 
-![screenshot](https://giladno.github.io/muster/assets/demo.png)
+![screenshot](https://github.com/giladno/muster/blob/master/docs/assets/demo.png)
+
 
 
 ```
