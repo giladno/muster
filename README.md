@@ -1,20 +1,31 @@
-# muster
-React Native Debugger
-
-This is a desktop tool for React Native developers.
-
-NOTE: This tool is in a very early stage!!
+# Muster
 
 ![screenshot](https://github.com/giladno/muster/blob/master/docs/assets/demo.png)
 
+This is a desktop application for React Native developers.
+
+###### NOTE: At the moment, only MacOS and iOS simulator are supported
 
 
-```
+## Installation
+
+Prebuilt binaries will be available soon...
+
+
+```bash
 git clone https://github.com/giladno/muster.git
 cd muster
 npm install && npm start
 ```
 
-A binary package is in progress.
+## Contributors 
+Always welcome, feel free to contact me!
 
-Any help (development, documentation, graphics etc.) is more than welcome, feel free to contact me!
+## Credits
+
+* Great work of [react-native-debugger](https://github.com/jhen0409/react-native-debugger)
+
+
+## LICENSE
+
+[MIT](LICENSE)
