@@ -68,8 +68,8 @@ const Url = class extends PureComponent {
     }
 };
 
-class Debugger extends PureComponent {
-    id = 'debugger';
+class Inspector extends PureComponent {
+    id = 'inspector';
 
     componentDidMount(){
         this.start();
@@ -85,7 +85,7 @@ class Debugger extends PureComponent {
         if (!this.inspector)
             this.inspector = require('react-devtools-core/standalone');
         this.server = this.inspector
-            .setBrowserName('RNDebugger DevTools')
+            .setBrowserName('Muster')
             .setStatusListener(status=>console.log(status))
             .setContentDOMNode(document.getElementById(this.id))
             .startServer(8097);
@@ -100,9 +100,9 @@ class Debugger extends PureComponent {
 
     render(){
         return (
-            <div id={this.id} style={{display: 'flex', height: '100%'}}>
+            <div id={this.id}>
                 <div id='waiting'>
-                    <h2>'Waiting for React to connect...</h2>
+                    <h2>Waiting for a connection...</h2>
                 </div>
             </div>
         );
@@ -116,8 +116,8 @@ class App extends PureComponent {
             dir: localStorage.dir,
             tab: '2',
             tabs: ['Console', 'Build', 'Packager'].map((title, index)=>({title, history: [],
-                render: ()=>this.renderConsole(this.state.tabs[index])})).concat({}, {title: 'Debugger',
-                    render: ()=><Debugger />}).map((tab, key)=>({...tab, key})),
+                render: ()=>this.renderConsole(this.state.tabs[index])})).concat({}, {title: 'Inspector',
+                    render: ()=><Inspector />}).map((tab, key)=>({...tab, key})),
         };
     }
 

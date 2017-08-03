@@ -9,6 +9,7 @@ module.exports = require('webpack-merge')({
     output: {
         path: path.join(__dirname, 'client'),
         filename: 'bundle.js',
+        libraryTarget: 'commonjs2',
     },
     module: {
         loaders: [{
