@@ -46,9 +46,12 @@
     "url-loader": "^0.5.9",
     "webpack": "^3.4.1",
     "webpack-dev-server": "^2.6.1",
-    "webpack-merge": "^4.1.0"
+    "webpack-merge": "^4.1.0",
+    "ws": "^3.1.0"
   },
-  "dependencies": {},
+  "dependencies": {
+    "react-devtools-core": "^2.5.0"
+  },
   "theme": {},
   "babel": {
     "presets": [

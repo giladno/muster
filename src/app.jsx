@@ -68,13 +68,56 @@ const Url = class extends PureComponent {
     }
 };
 
+class Debugger extends PureComponent {
+    id = 'debugger';
+
+    componentDidMount(){
+        this.start();
+    }
+
+    componentWillUnmount(){
+        this.stop();
+    }
+
+    start(){
+        if (this.server)
+            return;
+        if (!this.inspector)
+            this.inspector = require('react-devtools-core/standalone');
+        this.server = this.inspector
+            .setBrowserName('RNDebugger DevTools')
+            .setStatusListener(status=>console.log(status))
+            .setContentDOMNode(document.getElementById(this.id))
+            .startServer(8097);
+    }
+
+    stop(){
+        if (!this.server)
+            return;
+        this.server.close();
+        delete this.server;
+    }
+
+    render(){
+        return (
+            <div id={this.id} style={{display: 'flex', height: '100%'}}>
+                <div id='waiting'>
+                    <h2>'Waiting for React to connect...</h2>
+                </div>
+            </div>
+        );
+    }
+}
+
 class App extends PureComponent {
     constructor(props){
         super(props);
         this.state = {
             dir: localStorage.dir,
             tab: '2',
-            tabs: ['Console', 'Build', 'Packager'].map((title, key)=>({title, history: [], key})),
+            tabs: ['Console', 'Build', 'Packager'].map((title, index)=>({title, history: [],
+                render: ()=>this.renderConsole(this.state.tabs[index])})).concat({}, {title: 'Debugger',
+                    render: ()=><Debugger />}).map((tab, key)=>({...tab, key})),
         };
     }
 
@@ -253,6 +296,8 @@ class App extends PureComponent {
         }))});
     };
 
+    renderConsole = ({history})=>history.map(({id, data})=>(<div key={id}>{data}</div>));
+
     render(){
         let {dir, tab, tabs, streams, checklist} = this.state;
         return (
@@ -283,11 +328,12 @@ class App extends PureComponent {
                         </div>
                         <Menu onSelect={this.onTab} selectedKeys={[tab]} mode='inline' style={{border: 0}}>
                             <Menu.Divider />
-                            {tabs.map(({title, key})=><Menu.Item key={key}>{title}</Menu.Item>)}
+                            {tabs.map(({title, key})=>title ? <Menu.Item key={key}>{title}</Menu.Item> :
+                                <Menu.Divider key={key} />)}
                         </Menu>
                     </Layout.Sider>
                     <Layout.Content style={{marginLeft: 200}} id='console'>
-                        {tabs[+tab].history.map(({id, data})=>(<div key={id}>{data}</div>))}
+                        {tabs[+tab].render()}
                     </Layout.Content>
                     {checklist && <Layout.Sider id='checklist'>
                         <Collapse bordered={false} defaultActiveKey='checklist'>

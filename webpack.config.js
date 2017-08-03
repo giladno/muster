@@ -27,6 +27,11 @@ module.exports = require('webpack-merge')({
             loader: 'url-loader?limit=100000',
         }],
     },
+    externals: [
+        'react-devtools-core/standalone',
+        'utf-8-validate',
+        'bufferutil',
+    ],
     plugins: [
         new (require('html-webpack-plugin'))({
             inject: false,
