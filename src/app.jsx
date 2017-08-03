@@ -116,7 +116,7 @@ class App extends PureComponent {
             dir: localStorage.dir,
             tab: '2',
             tabs: ['Console', 'Build', 'Packager'].map((title, index)=>({title, history: [],
-                render: ()=>this.renderConsole(this.state.tabs[index])})).concat({}, {title: 'Inspector',
+                render: ()=>this.renderConsole(this.state.tabs[index])})).concat({title: 'Inspector',
                     render: ()=><Inspector />}).map((tab, key)=>({...tab, key})),
         };
     }
@@ -330,13 +330,9 @@ class App extends PureComponent {
                             <Menu.Divider />
                             {tabs.map(({title, key})=>title ? <Menu.Item key={key}>{title}</Menu.Item> :
                                 <Menu.Divider key={key} />)}
+                            <Menu.Divider />
                         </Menu>
-                    </Layout.Sider>
-                    <Layout.Content style={{marginLeft: 200}} id='console'>
-                        {tabs[+tab].render()}
-                    </Layout.Content>
-                    {checklist && <Layout.Sider id='checklist'>
-                        <Collapse bordered={false} defaultActiveKey='checklist'>
+                        {checklist && <Collapse bordered={false} defaultActiveKey='checklist'>
                             <Collapse.Panel header='Checklist' key='checklist'>
                                 <Steps direction='vertical' size='small'>
                                     {checklist.map(({cmd, env, title, description, status})=><Steps.Step
@@ -346,8 +342,12 @@ class App extends PureComponent {
                                         description={description}
                                     />)}
                                 </Steps>
-                        </Collapse.Panel></Collapse>
-                    </Layout.Sider>}
+                            </Collapse.Panel>
+                        </Collapse>}
+                    </Layout.Sider>
+                    <Layout.Content style={{marginLeft: 200}} id='console'>
+                        {tabs[+tab].render()}
+                    </Layout.Content>
                 </Layout>
             </LocaleProvider>
         );
