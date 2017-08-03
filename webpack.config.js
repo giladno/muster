@@ -1,15 +1,15 @@
 'use strict';
 const path = require('path');
 const webpack = require('webpack');
-const config = require('./package.json');
+const merge = require('webpack-merge');
+const {productName, theme = {}} = require('./package.json');
 
-module.exports = require('webpack-merge')({
-    target: 'electron-renderer',
+const NODE_ENV = process.env.NODE_ENV=='development' && process.env.NODE_ENV || 'production';
+
+const config = merge({
     entry: ['babel-polyfill'],
     output: {
         path: path.join(__dirname, 'client'),
-        filename: 'bundle.js',
-        libraryTarget: 'commonjs2',
     },
     module: {
         loaders: [{
@@ -17,52 +17,17 @@ module.exports = require('webpack-merge')({
             exclude: /node_modules/,
             loaders: ['babel-loader'],
             include: path.join(__dirname, 'src'),
-        }, {
-            test: /\.css$/,
-            use: ['style-loader', 'css-loader'],
-        }, {
-            test: /\.less$/,
-            use: ['style-loader', 'css-loader', {loader: 'less-loader', query: {modifyVars: config.theme||{}}}],
-        }, {
-            test: /\.(jpe?g|png|woff|woff2|eot|ttf|svg)$/,
-            loader: 'url-loader?limit=100000',
         }],
     },
-    externals: [
-        'react-devtools-core/standalone',
-        'utf-8-validate',
-        'bufferutil',
-    ],
-    plugins: [
-        new (require('html-webpack-plugin'))({
-            inject: false,
-            template: require('html-webpack-template'),
-            title: config.productName,
-            appMountId: 'root',
-            minify: {collapseWhitespace: true},
-            mobile: false,
-        }),
-    ],
+    plugins: [new webpack.DefinePlugin({'process.env.NODE_ENV': JSON.stringify(NODE_ENV)})],
 }, {
     development: {
         devtool: 'cheap-module-eval-source-map',
-        output: {
-            publicPath: '/client/',
-        },
-        entry: [
-            'webpack-dev-server/client?http://localhost:3000',
-            './src/app.jsx',
-        ],
-        plugins: [
-            new webpack.DefinePlugin({'process.env.NODE_ENV': JSON.stringify('development')}),
-        ],
+        entry: ['webpack-dev-server/client?http://localhost:3000'],
+        output: {publicPath: '/client/'},
     },
     production: {
-        entry: [
-            './src/app.jsx',
-        ],
         plugins: [
-            new webpack.DefinePlugin({'process.env.NODE_ENV': JSON.stringify('production')}),
             new webpack.optimize.UglifyJsPlugin({
                 comments: false,
                 compress: {
@@ -81,4 +46,46 @@ module.exports = require('webpack-merge')({
             }),
         ],
     },
-}[process.env.NODE_ENV=='development' && process.env.NODE_ENV || 'production']);
+}[NODE_ENV]||{});
+
+module.exports = [merge(config, {
+    entry: ['./src/worker.js'],
+    target: 'webworker',
+    output: {
+        filename: 'worker.js',
+    },
+}), merge(config, {
+    target: 'electron-renderer',
+    entry: ['./src/app.jsx'],
+    output: {
+        filename: 'bundle.js',
+        libraryTarget: 'commonjs2',
+    },
+    module: {
+        loaders: [{
+            test: /\.css$/,
+            use: ['style-loader', 'css-loader'],
+        }, {
+            test: /\.less$/,
+            use: ['style-loader', 'css-loader', {loader: 'less-loader', query: {modifyVars: theme}}],
+        }, {
+            test: /\.(jpe?g|png|woff|woff2|eot|ttf|svg)$/,
+            loader: 'url-loader?limit=100000',
+        }],
+    },
+    externals: [
+        'react-devtools-core/standalone',
+        'utf-8-validate',
+        'bufferutil',
+    ],
+    plugins: [
+        new (require('html-webpack-plugin'))({
+            inject: false,
+            template: require('html-webpack-template'),
+            title: productName,
+            appMountId: 'root',
+            minify: {collapseWhitespace: true},
+            mobile: false,
+        }),
+    ],
+}, {}[NODE_ENV]||{})];
