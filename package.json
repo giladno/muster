@@ -5,7 +5,7 @@
   "description": "React Native Debugging Tools",
   "main": "index.js",
   "scripts": {
-    "start": "$(npm bin)/electron . --dev",
+    "start": "$(npm bin)/electron .",
     "build": "NODE_ENV=production $(npm bin)/webpack --colors",
     "pack": "$(npm bin)/electron-builder --dir"
   },

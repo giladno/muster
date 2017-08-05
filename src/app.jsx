@@ -204,9 +204,46 @@ class App extends PureComponent {
                 });
             });
         };
+        const startDebugger = ()=>new Promise((resolve, reject)=>{
+            this.ws = new WebSocket('ws://localhost:8081/debugger-proxy?role=debugger&name=Muster');
+            this.ws.addEventListener('open', resolve);
+            this.ws.addEventListener('error', reject);
+            this.ws.addEventListener('close', ()=>{
+                if (!this.worker)
+                    return;
+                this.worker.terminate();
+                delete this.worker;
+            });
+            this.ws.addEventListener('message', msg=>{
+                if (!msg.data)
+                    return;
+                let data = JSON.parse(msg.data);
+                if (data.method=='prepareJSRuntime')
+                {
+                    if (this.worker)
+                        this.worker.terminate();
+                    this.worker = new Worker('worker.js');
+                    this.worker.onmessage = ({data})=>{
+                        if (!data.muster)
+                            return this.ws.send(JSON.stringify(data));
+                    }
+                    this.ws.send(JSON.stringify({replyID: data.id}));
+                }
+                else if (data.method=='$disconnected')
+                {
+                    if (!this.worker)
+                        return;
+                    this.worker.terminate();
+                    delete this.worker;
+                }
+                else if (this.worker)
+                    this.worker.postMessage(data);
+            });
+        });
         let packager = await startPackager();
         if (!packager)
             return;
+        await startDebugger();
         let udid = await startBuild();
         if (!udid)
             return packager.stop();
@@ -221,6 +258,11 @@ class App extends PureComponent {
         {
             if (streams[name])
                 streams[name].stop();
+        }
+        if (this.ws)
+        {
+            this.ws.close();
+            delete this.ws;
         }
         this.setState({streams: null});
     };
@@ -330,26 +372,26 @@ class App extends PureComponent {
                             <Menu.Divider />
                             {tabs.map(({title, key})=>title ? <Menu.Item key={key}>{title}</Menu.Item> :
                                 <Menu.Divider key={key} />)}
-                            <Menu.Divider />
-                        </Menu>
-                        {checklist && <Collapse bordered={false} defaultActiveKey='checklist'>
-                            <Collapse.Panel header='Checklist' key='checklist'>
-                                <Steps direction='vertical' size='small'>
-                                    {checklist.map(({cmd, env, title, description, status})=><Steps.Step
-                                        key={env||cmd}
-                                        status={status}
-                                        title={title}
-                                        description={description}
-                                    />)}
-                                </Steps>
-                            </Collapse.Panel>
-                        </Collapse>}
-                    </Layout.Sider>
-                    <Layout.Content style={{marginLeft: 200}} id='console'>
-                        {tabs[+tab].render()}
-                    </Layout.Content>
-                </Layout>
-            </LocaleProvider>
+                                <Menu.Divider />
+                            </Menu>
+                            {checklist && <Collapse bordered={false} defaultActiveKey='checklist'>
+                                <Collapse.Panel header='Checklist' key='checklist'>
+                                    <Steps direction='vertical' size='small'>
+                                        {checklist.map(({cmd, env, title, description, status})=><Steps.Step
+                                            key={env||cmd}
+                                            status={status}
+                                            title={title}
+                                            description={description}
+                                        />)}
+                                    </Steps>
+                                </Collapse.Panel>
+                            </Collapse>}
+                        </Layout.Sider>
+                        <Layout.Content style={{marginLeft: 200}} id='console'>
+                            {tabs[+tab].render()}
+                        </Layout.Content>
+                    </Layout>
+                </LocaleProvider>
         );
     }
 }

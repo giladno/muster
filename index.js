@@ -12,7 +12,7 @@ app.on('ready', async ()=>{
         const WebpackDevServer = require('webpack-dev-server');
         const config = require('./webpack.config');
 
-        server = new WebpackDevServer(webpack(config), {publicPath: config.output.publicPath});
+        server = new WebpackDevServer(webpack(config), {publicPath: config[0].output.publicPath});
         await new Promise((resolve, reject)=>server.listen(3000, err=>{
             if (err)
                 return reject(err);
