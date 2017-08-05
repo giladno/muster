@@ -22,6 +22,11 @@ const execFile = Promise.promisify(child_process.execFile);
 const RN_CLI = 'node_modules/react-native/local-cli/cli.js';
 
 class ConsoleStream extends EventEmitter {
+    constructor(opt = {}){
+        super();
+        Object.assign(this, opt);
+    }
+
     start(...args){
         return new Promise((resolve, reject)=>{
             let child = this.child = spawn(...args);
@@ -49,7 +54,8 @@ class ConsoleStream extends EventEmitter {
         });
     }
 
-    stop(signal = 'SIGINT'){
+    stop(signal){
+        signal = signal||this.signal||'SIGTERM';
         if (this.child)
             this.child.kill(signal);
     }
@@ -118,8 +124,20 @@ class App extends PureComponent {
             tabs: ['Console', 'Build', 'Packager'].map((title, index)=>({title, history: [],
                 render: ()=>this.renderConsole(this.state.tabs[index])})).concat({title: 'Inspector',
                     render: ()=><Inspector />}).map((tab, key)=>({...tab, key})),
+            autoscroll: true,
         };
     }
+
+    onScroll = ()=>{
+        if (this._scroll)
+            return;
+        this._scroll = true;
+        window.requestAnimationFrame(()=>{
+            let {body} = document;
+            this.setState({autoscroll: body.scrollTop>=body.scrollHeight-body.clientHeight});
+            this._scroll = false;
+        });
+    };
 
     componentDidMount(){
         let {dir} = this.state;
@@ -128,6 +146,16 @@ class App extends PureComponent {
             this.checklist(dir);
         else
             this.open();
+        let scroll;
+        window.addEventListener('scroll', this.onScroll);
+    }
+
+    componentDidUpdate(prevProps, prevState){
+        let {autoscroll, tabs, tab} = this.state;
+        let {body} = document;
+        tab = +tab;
+        if (autoscroll && (tab!=+prevState.tab || tabs[tab]!==prevState.tabs[tab]))
+            body.scrollTop = body.scrollHeight;
     }
 
     onTab = ({key})=>this.setState({tab: key});
