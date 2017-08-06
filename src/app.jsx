@@ -8,13 +8,14 @@ import child_process, {spawn} from 'child_process';
 import readline from 'readline';
 import {PassThrough} from 'stream';
 import React, {PureComponent} from 'react';
-import {LocaleProvider, Layout, Menu, Button} from 'antd';
+import {LocaleProvider, Layout, Menu, Button, Row, Col} from 'antd';
 import {Icon} from 'react-fa';
 import electron from 'electron';
 import ReactDOM from 'react-dom';
 import shortid from 'shortid';
 import enUS from 'antd/lib/locale-provider/en_US';
 import Checklist from './checklist.jsx';
+import FileTree from './filetree.jsx';
 
 const execFile = Promise.promisify(child_process.execFile);
 
@@ -101,13 +102,24 @@ class Inspector extends PureComponent {
     }
 }
 
+const ToolbarButton = ({icon, disabled, ...props})=>(
+    <Col span={2}>
+        {icon && <Button size='large' shape='circle' disabled={disabled && 'disabled' || false} {...props}>
+            <Icon name={icon} />
+        </Button>}
+    </Col>
+);
+
 class App extends PureComponent {
     constructor(props){
         super(props);
+        let his = [];
+        for (let i=0;i<300;i++)
+            his.push({id: ''+i, data: ''+i});
         this.state = {
             dir: localStorage.dir,
             tab: '2',
-            tabs: ['Console', 'Build', 'Packager'].map((title, index)=>({title, history: [],
+            tabs: ['Console', 'Build', 'Packager'].map((title, index)=>({title, history: [...his],
                 render: ()=>this.renderConsole(this.state.tabs[index])})).concat({title: 'Inspector',
                     render: ()=><Inspector />}).map((tab, key)=>({...tab, key})),
             autoscroll: true,
@@ -280,47 +292,48 @@ class App extends PureComponent {
 
     renderConsole = ({history})=>history.map(({id, data})=>(<div key={id}>{data}</div>));
 
+    renderSide = ()=>{
+        let {dir, tab, tabs} = this.state;
+        return (
+            <Layout.Sider id='menu' width={200}>
+                <Menu onSelect={this.onTab} selectedKeys={[tab]} mode='inline' style={{border: 0}}>
+                    {tabs.map(({title, key})=>title ? <Menu.Item key={key}>{title}</Menu.Item> :
+                        <Menu.Divider key={key} />)
+                    }
+                    <Menu.Divider />
+                </Menu>
+                <Checklist dir={dir} />
+            </Layout.Sider>
+        );
+    };
+
+    onTreeSelect = path=>{
+    };
+
     render(){
         let {dir, tab, tabs, streams} = this.state;
         return (
             <LocaleProvider locale={enUS}>
                 <Layout>
-                    <Layout.Sider id='menu' width={200}>
-                        <div id='toolbar'>
-                            <Button
-                                size='small'
-                                disabled={streams ? 'disabled' : false}
-                                onClick={this.open}
-                                title='Load Project'
-                            ><Icon name='folder-o' /></Button>
-                            <Button.Group style={{float: 'right'}}>
-                                <Button
-                                    size='small'
-                                    disabled={dir && !streams ? false : 'disabled'}
-                                    onClick={this.start}
-                                    title='Debug'
-                                ><Icon name='play' /></Button>
-                                <Button
-                                    size='small'
-                                    disabled={streams ? false : 'disabled'}
-                                    onClick={this.stop}
-                                    title='Stop'
-                                ><Icon name='stop' /></Button>
-                            </Button.Group>
-                        </div>
-                        <Menu onSelect={this.onTab} selectedKeys={[tab]} mode='inline' style={{border: 0}}>
-                            <Menu.Divider />
-                            {tabs.map(({title, key})=>title ? <Menu.Item key={key}>{title}</Menu.Item> :
-                                <Menu.Divider key={key} />)}
-                                <Menu.Divider />
-                            </Menu>
-                            <Checklist dir={dir} />
-                        </Layout.Sider>
+                    <Layout.Header id='header'>
+                        <Row id='toolbar'>
+                            <ToolbarButton onClick={this.open} title='Load Project' disabled={streams}
+                                icon='folder-o' />
+                            <ToolbarButton onClick={this.start} title='Debug' disabled={!dir || streams} icon='play' />
+                            <ToolbarButton onClick={this.stop} title='Stop' disabled={!streams} icon='stop' />
+                        </Row>
+                    </Layout.Header>
+                    <Layout id='content'>
+                        {null && <Layout.Sider id='tree'>
+                            <FileTree dir={dir} onSelect={this.onTreeSelect} />
+                        </Layout.Sider>}
+                        {this.renderSide()}
                         <Layout.Content style={{marginLeft: 200}} id='console'>
                             {tabs[+tab].render()}
                         </Layout.Content>
                     </Layout>
-                </LocaleProvider>
+                </Layout>
+            </LocaleProvider>
         );
     }
 }
