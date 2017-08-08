@@ -11,7 +11,6 @@ import React, {PureComponent} from 'react';
 import {LocaleProvider, Layout, Menu, Button, Row, Col} from 'antd';
 import {Icon} from 'react-fa';
 import electron from 'electron';
-import ReactDOM from 'react-dom';
 import shortid from 'shortid';
 import enUS from 'antd/lib/locale-provider/en_US';
 import Checklist from './checklist.jsx';
@@ -110,7 +109,7 @@ const ToolbarButton = ({icon, disabled, ...props})=>(
     </Col>
 );
 
-class App extends PureComponent {
+export default class extends PureComponent {
     constructor(props){
         super(props);
         let his = [];
@@ -337,5 +336,3 @@ class App extends PureComponent {
         );
     }
 }
-
-ReactDOM.render(<App />, document.getElementById('root'));

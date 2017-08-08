@@ -23,8 +23,17 @@ const config = merge({
 }, {
     development: {
         devtool: 'cheap-module-eval-source-map',
-        entry: ['webpack-dev-server/client?http://localhost:3000'],
+        entry: [
+            'react-hot-loader/patch',
+            'webpack-dev-server/client?http://localhost:3000',
+            'webpack/hot/only-dev-server',
+        ],
         output: {publicPath: '/client/'},
+        plugins: [
+            new webpack.HotModuleReplacementPlugin(),
+            new webpack.NamedModulesPlugin(),
+            new webpack.NoEmitOnErrorsPlugin(),
+        ],
     },
     production: {
         plugins: [
@@ -56,7 +65,7 @@ module.exports = [merge(config, {
     },
 }), merge(config, {
     target: 'electron-renderer',
-    entry: ['./src/app.jsx'],
+    entry: ['./src/index.jsx'],
     output: {
         filename: 'bundle.js',
         libraryTarget: 'commonjs2',
