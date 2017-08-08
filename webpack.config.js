@@ -15,7 +15,7 @@ const config = merge({
         loaders: [{
             test: /\.jsx?$/,
             exclude: /node_modules/,
-            loaders: ['babel-loader'],
+            loaders: ['babel-loader', 'eslint-loader'],
             include: path.join(__dirname, 'src'),
         }],
     },
@@ -78,8 +78,8 @@ module.exports = [merge(config, {
             test: /\.less$/,
             use: ['style-loader', 'css-loader', {loader: 'less-loader', query: {modifyVars: theme}}],
         }, {
-            test: /\.(jpe?g|png|woff|woff2|eot|ttf|svg)$/,
-            loader: 'url-loader?limit=100000',
+            test: /\.(jpe?g|png|gif|woff|woff2|eot|ttf|svg)$/,
+            loader: 'file-loader?limit=10000',
         }],
     },
     externals: [

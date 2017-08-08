@@ -31,6 +31,7 @@
     "electron": "^1.6.11",
     "electron-builder": "^19.17.0",
     "eslint": "^4.3.0",
+    "eslint-loader": "^1.9.0",
     "eslint-plugin-react": "^7.1.0",
     "file-loader": "^0.11.2",
     "html-webpack-plugin": "^2.30.1",
@@ -56,7 +57,12 @@
   "theme": {},
   "babel": {
     "presets": [
-      ["es2015", {"modules": false}],
+      [
+        "es2015",
+        {
+          "modules": false
+        }
+      ],
       "react",
       "stage-2"
     ],

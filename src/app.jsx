@@ -306,7 +306,7 @@ export default class extends PureComponent {
         );
     };
 
-    onTreeSelect = path=>{
+    onTreeSelect = ()=>{
     };
 
     render(){

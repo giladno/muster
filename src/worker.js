@@ -1,8 +1,9 @@
+/* global importScripts, __fbBatchedBridge */
 'use strict';
 self.global = self;
 self.nativeLoggingHook = (msg, level)=>{
     postMessage({console: msg, level, muster: true});
-}
+};
 
 const handlers = {
     executeApplicationScript: msg=>{
