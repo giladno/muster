@@ -112,13 +112,10 @@ const ToolbarButton = ({icon, disabled, ...props})=>(
 export default class extends PureComponent {
     constructor(props){
         super(props);
-        let his = [];
-        for (let i=0;i<300;i++)
-            his.push({id: ''+i, data: ''+i});
         this.state = {
             dir: localStorage.dir,
             tab: '2',
-            tabs: ['Console', 'Build', 'Packager'].map((title, index)=>({title, history: [...his],
+            tabs: ['Console', 'Build', 'Packager'].map((title, index)=>({title, history: [],
                 render: ()=>this.renderConsole(this.state.tabs[index])})).concat({title: 'Inspector',
                     render: ()=><Inspector />}).map((tab, key)=>({...tab, key})),
             autoscroll: true,
